@@ -26,7 +26,12 @@ const SearchResults = () => {
     let results = [...mockProperties];
 
     if (wilaya) {
-      results = results.filter((p) => p.wilaya === wilaya);
+      const wilayaResults = results.filter((p) => p.wilaya === wilaya);
+      // If no results for this wilaya, show all properties as suggestions
+      if (wilayaResults.length > 0) {
+        results = wilayaResults;
+      }
+      // else keep all results to show as suggestions
     }
     if (filterType) {
       results = results.filter((p) => p.type === filterType);
