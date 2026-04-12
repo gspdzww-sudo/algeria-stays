@@ -14,7 +14,176 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          check_in: string
+          check_out: string
+          created_at: string
+          guest_email: string | null
+          guest_name: string | null
+          guest_phone: string | null
+          guests: number
+          id: string
+          notes: string | null
+          payment_method: string | null
+          property_id: string
+          service_fee: number
+          status: string
+          total_price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          check_in: string
+          check_out: string
+          created_at?: string
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
+          guests?: number
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          property_id: string
+          service_fee?: number
+          status?: string
+          total_price: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          check_in?: string
+          check_out?: string
+          created_at?: string
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
+          guests?: number
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          property_id?: string
+          service_fee?: number
+          status?: string
+          total_price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          first_name: string | null
+          hotel_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          role: string
+          updated_at: string
+          user_id: string
+          wilaya: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          first_name?: string | null
+          hotel_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          role?: string
+          updated_at?: string
+          user_id: string
+          wilaya?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          first_name?: string | null
+          hotel_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string
+          wilaya?: string | null
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          amenities: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          image: string | null
+          images: string[] | null
+          is_active: boolean | null
+          location: string
+          max_guests: number | null
+          name: string
+          owner_id: string
+          price: number
+          rating: number | null
+          reviews_count: number | null
+          rooms: number | null
+          type: string
+          updated_at: string
+          wilaya: string
+        }
+        Insert: {
+          amenities?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          images?: string[] | null
+          is_active?: boolean | null
+          location: string
+          max_guests?: number | null
+          name: string
+          owner_id: string
+          price: number
+          rating?: number | null
+          reviews_count?: number | null
+          rooms?: number | null
+          type: string
+          updated_at?: string
+          wilaya: string
+        }
+        Update: {
+          amenities?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          images?: string[] | null
+          is_active?: boolean | null
+          location?: string
+          max_guests?: number | null
+          name?: string
+          owner_id?: string
+          price?: number
+          rating?: number | null
+          reviews_count?: number | null
+          rooms?: number | null
+          type?: string
+          updated_at?: string
+          wilaya?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
