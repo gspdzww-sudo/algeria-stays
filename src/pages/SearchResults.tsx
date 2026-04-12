@@ -79,7 +79,9 @@ const SearchResults = () => {
               {wilaya ? `إقامات في ${wilaya}` : "جميع الإقامات"}
             </h1>
             <p className="text-sm font-arabic text-muted-foreground mt-1">
-              {filteredProperties.length} نتيجة
+              {wilaya && mockProperties.filter(p => p.wilaya === wilaya).length === 0
+                ? `لا توجد إقامات بعد في ${wilaya} — إليك اقتراحات من مناطق أخرى (${filteredProperties.length})`
+                : `${filteredProperties.length} نتيجة`}
             </p>
           </div>
           <div className="flex items-center gap-3">
