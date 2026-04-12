@@ -26,7 +26,12 @@ const SearchResults = () => {
     let results = [...mockProperties];
 
     if (wilaya) {
-      results = results.filter((p) => p.wilaya === wilaya);
+      const wilayaResults = results.filter((p) => p.wilaya === wilaya);
+      // If no results for this wilaya, show all properties as suggestions
+      if (wilayaResults.length > 0) {
+        results = wilayaResults;
+      }
+      // else keep all results to show as suggestions
     }
     if (filterType) {
       results = results.filter((p) => p.type === filterType);
@@ -74,7 +79,9 @@ const SearchResults = () => {
               {wilaya ? `إقامات في ${wilaya}` : "جميع الإقامات"}
             </h1>
             <p className="text-sm font-arabic text-muted-foreground mt-1">
-              {filteredProperties.length} نتيجة
+              {wilaya && mockProperties.filter(p => p.wilaya === wilaya).length === 0
+                ? `لا توجد إقامات بعد في ${wilaya} — إليك اقتراحات من مناطق أخرى (${filteredProperties.length})`
+                : `${filteredProperties.length} نتيجة`}
             </p>
           </div>
           <div className="flex items-center gap-3">
