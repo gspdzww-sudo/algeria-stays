@@ -1,9 +1,29 @@
 import { Star, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
-import { mockProperties } from "@/data/properties";
+import { useProperties } from "@/hooks/useProperties";
 
 export function FeaturedProperties() {
-  const featured = mockProperties.slice(0, 4);
+  const { properties, loading } = useProperties();
+  const featured = properties.slice(0, 4);
+
+  if (loading) {
+    return (
+      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" dir="rtl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-card rounded-2xl overflow-hidden shadow-soft border border-border/30 animate-pulse">
+              <div className="h-48 bg-muted" />
+              <div className="p-4 space-y-3">
+                <div className="h-4 bg-muted rounded w-3/4" />
+                <div className="h-3 bg-muted rounded w-1/2" />
+                <div className="h-4 bg-muted rounded w-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" dir="rtl">
