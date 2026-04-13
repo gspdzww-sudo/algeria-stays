@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { mockProperties } from "@/data/properties";
+import { useProperty } from "@/hooks/useProperties";
 
 type BookingStep = 1 | 2 | 3;
 
@@ -19,7 +19,7 @@ const paymentMethods = [
 const PropertyDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const property = mockProperties.find((p) => p.id === id);
+  const { property, loading } = useProperty(id);
 
   const [currentImage, setCurrentImage] = useState(0);
   const [bookingStep, setBookingStep] = useState<BookingStep | null>(null);
