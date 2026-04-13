@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { mockProperties } from "@/data/properties";
+import { useProperty } from "@/hooks/useProperties";
 
 type BookingStep = 1 | 2 | 3;
 
@@ -19,7 +19,7 @@ const paymentMethods = [
 const PropertyDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const property = mockProperties.find((p) => p.id === id);
+  const { property, loading } = useProperty(id);
 
   const [currentImage, setCurrentImage] = useState(0);
   const [bookingStep, setBookingStep] = useState<BookingStep | null>(null);
@@ -28,6 +28,18 @@ const PropertyDetails = () => {
   const [guests, setGuests] = useState(2);
   const [paymentMethod, setPaymentMethod] = useState("");
   const [bookingComplete, setBookingComplete] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center" dir="rtl">
+        <Navbar />
+        <div className="text-center pt-20">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="font-arabic text-muted-foreground">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!property) {
     return (
