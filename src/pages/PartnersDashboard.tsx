@@ -53,6 +53,13 @@ const statusConfig = {
 const PartnersDashboard = () => {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   const totalRevenue = mockBookings
     .filter((b) => b.status === "confirmed")
@@ -123,13 +130,13 @@ const PartnersDashboard = () => {
                 <p className="font-arabic text-xs text-secondary-foreground/60">شريك</p>
               </div>
             </div>
-            <Link
-              to="/"
+            <button
+              onClick={handleSignOut}
               className="mt-2 w-full flex items-center gap-2 px-4 py-2 rounded-xl font-arabic text-sm text-secondary-foreground/60 hover:text-secondary-foreground hover:bg-secondary-foreground/5 transition-all"
             >
               <LogOut className="h-4 w-4" />
               <span>تسجيل الخروج</span>
-            </Link>
+            </button>
           </div>
         </div>
       </aside>
