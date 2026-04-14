@@ -10,6 +10,7 @@ import PropertyDetails from "./pages/PropertyDetails.tsx";
 import Auth from "./pages/Auth.tsx";
 import PartnersDashboard from "./pages/PartnersDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -25,7 +26,7 @@ const App = () => (
             <Route path="/search" element={<SearchResults />} />
             <Route path="/property/:id" element={<PropertyDetails />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/partners/dashboard" element={<PartnersDashboard />} />
+            <Route path="/partners/dashboard" element={<ProtectedRoute><PartnersDashboard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
