@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   BarChart3, BedDouble, Calendar, DollarSign, Star, TrendingUp,
   Plus, Eye, Edit, Trash2, Menu, X, Home, Settings, LogOut, Users,
