@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import destAlgiers from "@/assets/dest-algiers.jpg";
 import destOran from "@/assets/dest-oran.jpg";
 import destBejaia from "@/assets/dest-bejaia.jpg";
@@ -13,6 +14,12 @@ const destinations = [
 ];
 
 export function Destinations() {
+  const navigate = useNavigate();
+
+  const handleClick = (name: string) => {
+    navigate(`/search?wilaya=${encodeURIComponent(name)}`);
+  };
+
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" dir="rtl">
       <div className="text-center mb-12">
@@ -28,6 +35,7 @@ export function Destinations() {
         {destinations.map((dest, i) => (
           <div
             key={dest.name}
+            onClick={() => handleClick(dest.name)}
             className={`group relative rounded-2xl overflow-hidden shadow-soft hover:shadow-elevated transition-all duration-500 cursor-pointer ${
               i === 0 ? "md:col-span-2 md:row-span-2 min-h-[400px]" : "min-h-[240px]"
             }`}
