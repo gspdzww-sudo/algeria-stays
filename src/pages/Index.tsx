@@ -5,6 +5,7 @@ import { FeaturedProperties } from "@/components/FeaturedProperties";
 import { AlgeriaMap } from "@/components/AlgeriaMap";
 import { Features } from "@/components/Features";
 import { Footer } from "@/components/Footer";
+import { InfoButton } from "@/components/InfoButton";
 
 const Index = () => {
   return (
@@ -16,6 +17,7 @@ const Index = () => {
       <AlgeriaMap />
       <Features />
       <Footer />
+      <InfoButton />
     </div>
   );
 };
