@@ -172,7 +172,7 @@ const PropertyDetails = () => {
                 {bookingComplete ? "تم الحجز!" : `خطوة ${bookingStep} من 3`}
               </h2>
               <button
-                onClick={() => { setBookingStep(null); setBookingComplete(false); }}
+                onClick={resetBookingState}
                 className="text-muted-foreground hover:text-foreground text-xl"
               >
                 ✕
@@ -202,7 +202,6 @@ const PropertyDetails = () => {
 
           <div className="p-6">
             {bookingComplete ? (
-              /* Success */
               <div className="text-center py-8">
                 <div className="w-20 h-20 rounded-full bg-accent flex items-center justify-center mx-auto mb-6">
                   <Check className="h-10 w-10 text-accent-foreground" />
@@ -215,10 +214,10 @@ const PropertyDetails = () => {
                   {(totalPrice + serviceFee).toLocaleString()} دج
                 </p>
                 <p className="font-arabic text-sm text-muted-foreground mb-6">
-                  سيتم إرسال تأكيد الحجز إلى بريدك الإلكتروني
+                  تم حفظ حجزك بنجاح. يمكنك متابعته من حسابك.
                 </p>
                 <button
-                  onClick={() => { setBookingStep(null); setBookingComplete(false); }}
+                  onClick={resetBookingState}
                   className="bg-gradient-gold text-primary-foreground font-arabic font-semibold py-3 px-8 rounded-xl shadow-gold"
                 >
                   حسناً
