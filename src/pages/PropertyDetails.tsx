@@ -304,6 +304,8 @@ const PropertyDetails = () => {
                     <input
                       type="text"
                       placeholder="محمد"
+                      value={guestFirstName}
+                      onChange={(e) => setGuestFirstName(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
@@ -312,6 +314,8 @@ const PropertyDetails = () => {
                     <input
                       type="text"
                       placeholder="بن أحمد"
+                      value={guestLastName}
+                      onChange={(e) => setGuestLastName(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
@@ -321,6 +325,8 @@ const PropertyDetails = () => {
                   <input
                     type="email"
                     placeholder="example@email.com"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                     dir="ltr"
                   />
@@ -330,6 +336,8 @@ const PropertyDetails = () => {
                   <input
                     type="tel"
                     placeholder="0555 123 456"
+                    value={guestPhone}
+                    onChange={(e) => setGuestPhone(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                     dir="ltr"
                   />
@@ -339,6 +347,8 @@ const PropertyDetails = () => {
                   <textarea
                     rows={2}
                     placeholder="أي طلبات خاصة..."
+                    value={guestNotes}
+                    onChange={(e) => setGuestNotes(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring resize-none"
                   />
                 </div>
@@ -350,7 +360,13 @@ const PropertyDetails = () => {
                     رجوع
                   </button>
                   <button
-                    onClick={() => setBookingStep(3)}
+                    onClick={() => {
+                      if (!guestFirstName || !guestLastName || !guestEmail || !guestPhone) {
+                        toast({ title: "حقول مطلوبة", description: "يرجى ملء جميع الحقول", variant: "destructive" });
+                        return;
+                      }
+                      setBookingStep(3);
+                    }}
                     className="flex-1 bg-gradient-gold text-primary-foreground font-arabic font-semibold py-3 rounded-xl shadow-gold hover:opacity-90 transition-all flex items-center justify-center gap-2"
                   >
                     <span>التالي: الدفع</span>
@@ -362,6 +378,19 @@ const PropertyDetails = () => {
               /* Step 3: Payment */
               <div className="space-y-4">
                 <h3 className="font-heading font-semibold text-lg text-foreground">اختر وسيلة الدفع</h3>
+
+                {paymentStatus === "failed" && (
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-destructive/10 text-destructive">
+                    <XCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-arabic font-semibold text-sm">فشلت عملية الدفع</p>
+                      <p className="font-arabic text-xs opacity-80 mt-1">
+                        تعذّر معالجة الدفع. يرجى المحاولة مرة أخرى أو اختيار وسيلة دفع أخرى.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   {paymentMethods.map((method) => (
                     <label
@@ -377,7 +406,7 @@ const PropertyDetails = () => {
                         name="payment"
                         value={method.id}
                         checked={paymentMethod === method.id}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        onChange={(e) => { setPaymentMethod(e.target.value); setPaymentStatus("idle"); }}
                         className="accent-primary"
                       />
                       <span className="text-2xl">{method.icon}</span>
@@ -388,6 +417,19 @@ const PropertyDetails = () => {
                     </label>
                   ))}
                 </div>
+
+                {/* Mock gateway: simulate payment failure (testing/demo) */}
+                <label className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={forceFail}
+                    onChange={(e) => setForceFail(e.target.checked)}
+                    className="accent-primary"
+                  />
+                  <span className="font-arabic text-xs text-muted-foreground">
+                    🧪 محاكاة فشل الدفع (وضع الاختبار)
+                  </span>
+                </label>
 
                 <div className="bg-muted/50 rounded-xl p-4 flex items-center gap-2">
                   <Shield className="h-5 w-5 text-primary shrink-0" />
@@ -404,17 +446,27 @@ const PropertyDetails = () => {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setBookingStep(2)}
-                    className="px-6 py-3 rounded-xl border border-border font-arabic text-sm hover:bg-muted transition-all"
+                    disabled={paymentStatus === "processing"}
+                    className="px-6 py-3 rounded-xl border border-border font-arabic text-sm hover:bg-muted transition-all disabled:opacity-50"
                   >
                     رجوع
                   </button>
                   <button
-                    onClick={() => paymentMethod && setBookingComplete(true)}
-                    disabled={!paymentMethod}
+                    onClick={handleConfirmPayment}
+                    disabled={!paymentMethod || paymentStatus === "processing"}
                     className="flex-1 bg-gradient-gold text-primary-foreground font-arabic font-semibold py-3 rounded-xl shadow-gold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    <CreditCard className="h-4 w-4" />
-                    <span>تأكيد والدفع</span>
+                    {paymentStatus === "processing" ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full" />
+                        <span>جاري المعالجة...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="h-4 w-4" />
+                        <span>{paymentStatus === "failed" ? "إعادة المحاولة" : "تأكيد والدفع"}</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
