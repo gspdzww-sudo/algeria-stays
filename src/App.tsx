@@ -26,7 +26,7 @@ const App = () => (
             <Route path="/search" element={<SearchResults />} />
             <Route path="/property/:id" element={<PropertyDetails />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/partners/dashboard" element={<ProtectedRoute><PartnersDashboard /></ProtectedRoute>} />
+            <Route path="/partners/dashboard" element={<ProtectedRoute requiredRole="partner"><PartnersDashboard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

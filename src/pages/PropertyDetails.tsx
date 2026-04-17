@@ -2,13 +2,17 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Star, MapPin, Users, BedDouble, ChevronRight, ChevronLeft,
-  Check, CreditCard, Shield, ArrowRight
+  Check, CreditCard, Shield, ArrowRight, AlertCircle, XCircle
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useProperty } from "@/hooks/useProperties";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 type BookingStep = 1 | 2 | 3;
+type PaymentStatus = "idle" | "processing" | "success" | "failed";
 
 const paymentMethods = [
   { id: "edahabia", name: "بطاقة الذهبية", icon: "💳", desc: "Edahabia - بريد الجزائر" },
@@ -16,9 +20,13 @@ const paymentMethods = [
   { id: "cib", name: "بطاقة CIB", icon: "🏦", desc: "البطاقات البنكية" },
 ];
 
+const todayStr = () => new Date().toISOString().split("T")[0];
+
 const PropertyDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const { property, loading } = useProperty(id);
 
   const [currentImage, setCurrentImage] = useState(0);
@@ -28,6 +36,16 @@ const PropertyDetails = () => {
   const [guests, setGuests] = useState(2);
   const [paymentMethod, setPaymentMethod] = useState("");
   const [bookingComplete, setBookingComplete] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("idle");
+  const [forceFail, setForceFail] = useState(false);
+  const [dateError, setDateError] = useState("");
+
+  // Step 2 controlled fields
+  const [guestFirstName, setGuestFirstName] = useState("");
+  const [guestLastName, setGuestLastName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestNotes, setGuestNotes] = useState("");
 
   if (loading) {
     return (
@@ -65,7 +83,81 @@ const PropertyDetails = () => {
   const nextImage = () => setCurrentImage((prev) => (prev + 1) % property.images.length);
   const prevImage = () => setCurrentImage((prev) => (prev - 1 + property.images.length) % property.images.length);
 
-  const handleStartBooking = () => setBookingStep(1);
+  const validateDates = () => {
+    if (!checkIn || !checkOut) {
+      setDateError("يرجى اختيار تاريخ الدخول والخروج");
+      return false;
+    }
+    const today = new Date(todayStr());
+    const ci = new Date(checkIn);
+    const co = new Date(checkOut);
+    if (ci < today) {
+      setDateError("تاريخ الدخول لا يمكن أن يكون في الماضي");
+      return false;
+    }
+    if (co <= ci) {
+      setDateError("تاريخ الخروج يجب أن يكون بعد تاريخ الدخول");
+      return false;
+    }
+    setDateError("");
+    return true;
+  };
+
+  const handleStartBooking = () => {
+    if (!user) {
+      toast({ title: "تسجيل الدخول مطلوب", description: "الرجاء تسجيل الدخول قبل الحجز" });
+      navigate("/auth");
+      return;
+    }
+    setBookingStep(1);
+  };
+
+  const resetBookingState = () => {
+    setBookingStep(null);
+    setBookingComplete(false);
+    setPaymentStatus("idle");
+    setForceFail(false);
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!user || !property) return;
+    setPaymentStatus("processing");
+
+    await new Promise((r) => setTimeout(r, 1500));
+
+    if (forceFail) {
+      setPaymentStatus("failed");
+      toast({ title: "فشل الدفع", description: "حاول مرة أخرى أو استخدم وسيلة دفع أخرى", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase.from("bookings").insert({
+      user_id: user.id,
+      property_id: property.id,
+      check_in: checkIn,
+      check_out: checkOut,
+      guests,
+      total_price: totalPrice + serviceFee,
+      service_fee: serviceFee,
+      status: "pending",
+      payment_method: paymentMethod,
+      guest_name: `${guestFirstName} ${guestLastName}`.trim(),
+      guest_email: guestEmail,
+      guest_phone: guestPhone,
+      notes: guestNotes || null,
+    });
+
+    if (error) {
+      console.error("Booking error:", error);
+      setPaymentStatus("failed");
+      toast({ title: "خطأ في الحجز", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    setPaymentStatus("success");
+    setBookingComplete(true);
+    toast({ title: "تم الحجز بنجاح!", description: "سيتم التواصل معك قريباً" });
+  };
 
   const renderBookingModal = () => {
     if (!bookingStep) return null;
@@ -80,7 +172,7 @@ const PropertyDetails = () => {
                 {bookingComplete ? "تم الحجز!" : `خطوة ${bookingStep} من 3`}
               </h2>
               <button
-                onClick={() => { setBookingStep(null); setBookingComplete(false); }}
+                onClick={resetBookingState}
                 className="text-muted-foreground hover:text-foreground text-xl"
               >
                 ✕
@@ -110,7 +202,6 @@ const PropertyDetails = () => {
 
           <div className="p-6">
             {bookingComplete ? (
-              /* Success */
               <div className="text-center py-8">
                 <div className="w-20 h-20 rounded-full bg-accent flex items-center justify-center mx-auto mb-6">
                   <Check className="h-10 w-10 text-accent-foreground" />
@@ -123,10 +214,10 @@ const PropertyDetails = () => {
                   {(totalPrice + serviceFee).toLocaleString()} دج
                 </p>
                 <p className="font-arabic text-sm text-muted-foreground mb-6">
-                  سيتم إرسال تأكيد الحجز إلى بريدك الإلكتروني
+                  تم حفظ حجزك بنجاح. يمكنك متابعته من حسابك.
                 </p>
                 <button
-                  onClick={() => { setBookingStep(null); setBookingComplete(false); }}
+                  onClick={resetBookingState}
                   className="bg-gradient-gold text-primary-foreground font-arabic font-semibold py-3 px-8 rounded-xl shadow-gold"
                 >
                   حسناً
@@ -142,7 +233,8 @@ const PropertyDetails = () => {
                     <input
                       type="date"
                       value={checkIn}
-                      onChange={(e) => setCheckIn(e.target.value)}
+                      min={todayStr()}
+                      onChange={(e) => { setCheckIn(e.target.value); setDateError(""); }}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
@@ -151,11 +243,20 @@ const PropertyDetails = () => {
                     <input
                       type="date"
                       value={checkOut}
-                      onChange={(e) => setCheckOut(e.target.value)}
+                      min={checkIn || todayStr()}
+                      onChange={(e) => { setCheckOut(e.target.value); setDateError(""); }}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
                 </div>
+
+                {dateError && (
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 text-destructive">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span className="font-arabic text-sm">{dateError}</span>
+                  </div>
+                )}
+
                 <div>
                   <label className="text-xs font-arabic text-muted-foreground mb-1 block">عدد الضيوف</label>
                   <select
@@ -186,9 +287,8 @@ const PropertyDetails = () => {
                 </div>
 
                 <button
-                  onClick={() => checkIn && checkOut && setBookingStep(2)}
-                  disabled={!checkIn || !checkOut}
-                  className="w-full bg-gradient-gold text-primary-foreground font-arabic font-semibold py-3 rounded-xl shadow-gold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  onClick={() => { if (validateDates()) setBookingStep(2); }}
+                  className="w-full bg-gradient-gold text-primary-foreground font-arabic font-semibold py-3 rounded-xl shadow-gold hover:opacity-90 transition-all flex items-center justify-center gap-2"
                 >
                   <span>التالي: معلوماتك الشخصية</span>
                   <ArrowRight className="h-4 w-4 rotate-180" />
@@ -204,6 +304,8 @@ const PropertyDetails = () => {
                     <input
                       type="text"
                       placeholder="محمد"
+                      value={guestFirstName}
+                      onChange={(e) => setGuestFirstName(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
@@ -212,6 +314,8 @@ const PropertyDetails = () => {
                     <input
                       type="text"
                       placeholder="بن أحمد"
+                      value={guestLastName}
+                      onChange={(e) => setGuestLastName(e.target.value)}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
@@ -221,6 +325,8 @@ const PropertyDetails = () => {
                   <input
                     type="email"
                     placeholder="example@email.com"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                     dir="ltr"
                   />
@@ -230,6 +336,8 @@ const PropertyDetails = () => {
                   <input
                     type="tel"
                     placeholder="0555 123 456"
+                    value={guestPhone}
+                    onChange={(e) => setGuestPhone(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                     dir="ltr"
                   />
@@ -239,6 +347,8 @@ const PropertyDetails = () => {
                   <textarea
                     rows={2}
                     placeholder="أي طلبات خاصة..."
+                    value={guestNotes}
+                    onChange={(e) => setGuestNotes(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring resize-none"
                   />
                 </div>
@@ -250,7 +360,13 @@ const PropertyDetails = () => {
                     رجوع
                   </button>
                   <button
-                    onClick={() => setBookingStep(3)}
+                    onClick={() => {
+                      if (!guestFirstName || !guestLastName || !guestEmail || !guestPhone) {
+                        toast({ title: "حقول مطلوبة", description: "يرجى ملء جميع الحقول", variant: "destructive" });
+                        return;
+                      }
+                      setBookingStep(3);
+                    }}
                     className="flex-1 bg-gradient-gold text-primary-foreground font-arabic font-semibold py-3 rounded-xl shadow-gold hover:opacity-90 transition-all flex items-center justify-center gap-2"
                   >
                     <span>التالي: الدفع</span>
@@ -262,6 +378,19 @@ const PropertyDetails = () => {
               /* Step 3: Payment */
               <div className="space-y-4">
                 <h3 className="font-heading font-semibold text-lg text-foreground">اختر وسيلة الدفع</h3>
+
+                {paymentStatus === "failed" && (
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-destructive/10 text-destructive">
+                    <XCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-arabic font-semibold text-sm">فشلت عملية الدفع</p>
+                      <p className="font-arabic text-xs opacity-80 mt-1">
+                        تعذّر معالجة الدفع. يرجى المحاولة مرة أخرى أو اختيار وسيلة دفع أخرى.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   {paymentMethods.map((method) => (
                     <label
@@ -277,7 +406,7 @@ const PropertyDetails = () => {
                         name="payment"
                         value={method.id}
                         checked={paymentMethod === method.id}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        onChange={(e) => { setPaymentMethod(e.target.value); setPaymentStatus("idle"); }}
                         className="accent-primary"
                       />
                       <span className="text-2xl">{method.icon}</span>
@@ -288,6 +417,19 @@ const PropertyDetails = () => {
                     </label>
                   ))}
                 </div>
+
+                {/* Mock gateway: simulate payment failure (testing/demo) */}
+                <label className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={forceFail}
+                    onChange={(e) => setForceFail(e.target.checked)}
+                    className="accent-primary"
+                  />
+                  <span className="font-arabic text-xs text-muted-foreground">
+                    🧪 محاكاة فشل الدفع (وضع الاختبار)
+                  </span>
+                </label>
 
                 <div className="bg-muted/50 rounded-xl p-4 flex items-center gap-2">
                   <Shield className="h-5 w-5 text-primary shrink-0" />
@@ -304,17 +446,27 @@ const PropertyDetails = () => {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setBookingStep(2)}
-                    className="px-6 py-3 rounded-xl border border-border font-arabic text-sm hover:bg-muted transition-all"
+                    disabled={paymentStatus === "processing"}
+                    className="px-6 py-3 rounded-xl border border-border font-arabic text-sm hover:bg-muted transition-all disabled:opacity-50"
                   >
                     رجوع
                   </button>
                   <button
-                    onClick={() => paymentMethod && setBookingComplete(true)}
-                    disabled={!paymentMethod}
+                    onClick={handleConfirmPayment}
+                    disabled={!paymentMethod || paymentStatus === "processing"}
                     className="flex-1 bg-gradient-gold text-primary-foreground font-arabic font-semibold py-3 rounded-xl shadow-gold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    <CreditCard className="h-4 w-4" />
-                    <span>تأكيد والدفع</span>
+                    {paymentStatus === "processing" ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full" />
+                        <span>جاري المعالجة...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="h-4 w-4" />
+                        <span>{paymentStatus === "failed" ? "إعادة المحاولة" : "تأكيد والدفع"}</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
