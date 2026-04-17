@@ -233,7 +233,8 @@ const PropertyDetails = () => {
                     <input
                       type="date"
                       value={checkIn}
-                      onChange={(e) => setCheckIn(e.target.value)}
+                      min={todayStr()}
+                      onChange={(e) => { setCheckIn(e.target.value); setDateError(""); }}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
@@ -242,11 +243,20 @@ const PropertyDetails = () => {
                     <input
                       type="date"
                       value={checkOut}
-                      onChange={(e) => setCheckOut(e.target.value)}
+                      min={checkIn || todayStr()}
+                      onChange={(e) => { setCheckOut(e.target.value); setDateError(""); }}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
                 </div>
+
+                {dateError && (
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 text-destructive">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span className="font-arabic text-sm">{dateError}</span>
+                  </div>
+                )}
+
                 <div>
                   <label className="text-xs font-arabic text-muted-foreground mb-1 block">عدد الضيوف</label>
                   <select
@@ -277,9 +287,8 @@ const PropertyDetails = () => {
                 </div>
 
                 <button
-                  onClick={() => checkIn && checkOut && setBookingStep(2)}
-                  disabled={!checkIn || !checkOut}
-                  className="w-full bg-gradient-gold text-primary-foreground font-arabic font-semibold py-3 rounded-xl shadow-gold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  onClick={() => { if (validateDates()) setBookingStep(2); }}
+                  className="w-full bg-gradient-gold text-primary-foreground font-arabic font-semibold py-3 rounded-xl shadow-gold hover:opacity-90 transition-all flex items-center justify-center gap-2"
                 >
                   <span>التالي: معلوماتك الشخصية</span>
                   <ArrowRight className="h-4 w-4 rotate-180" />
