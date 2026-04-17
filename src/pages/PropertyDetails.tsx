@@ -2,13 +2,17 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Star, MapPin, Users, BedDouble, ChevronRight, ChevronLeft,
-  Check, CreditCard, Shield, ArrowRight
+  Check, CreditCard, Shield, ArrowRight, AlertCircle, XCircle
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useProperty } from "@/hooks/useProperties";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 type BookingStep = 1 | 2 | 3;
+type PaymentStatus = "idle" | "processing" | "success" | "failed";
 
 const paymentMethods = [
   { id: "edahabia", name: "بطاقة الذهبية", icon: "💳", desc: "Edahabia - بريد الجزائر" },
@@ -16,9 +20,13 @@ const paymentMethods = [
   { id: "cib", name: "بطاقة CIB", icon: "🏦", desc: "البطاقات البنكية" },
 ];
 
+const todayStr = () => new Date().toISOString().split("T")[0];
+
 const PropertyDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const { property, loading } = useProperty(id);
 
   const [currentImage, setCurrentImage] = useState(0);
@@ -28,6 +36,16 @@ const PropertyDetails = () => {
   const [guests, setGuests] = useState(2);
   const [paymentMethod, setPaymentMethod] = useState("");
   const [bookingComplete, setBookingComplete] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("idle");
+  const [forceFail, setForceFail] = useState(false);
+  const [dateError, setDateError] = useState("");
+
+  // Step 2 controlled fields
+  const [guestFirstName, setGuestFirstName] = useState("");
+  const [guestLastName, setGuestLastName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestNotes, setGuestNotes] = useState("");
 
   if (loading) {
     return (
@@ -65,7 +83,81 @@ const PropertyDetails = () => {
   const nextImage = () => setCurrentImage((prev) => (prev + 1) % property.images.length);
   const prevImage = () => setCurrentImage((prev) => (prev - 1 + property.images.length) % property.images.length);
 
-  const handleStartBooking = () => setBookingStep(1);
+  const validateDates = () => {
+    if (!checkIn || !checkOut) {
+      setDateError("يرجى اختيار تاريخ الدخول والخروج");
+      return false;
+    }
+    const today = new Date(todayStr());
+    const ci = new Date(checkIn);
+    const co = new Date(checkOut);
+    if (ci < today) {
+      setDateError("تاريخ الدخول لا يمكن أن يكون في الماضي");
+      return false;
+    }
+    if (co <= ci) {
+      setDateError("تاريخ الخروج يجب أن يكون بعد تاريخ الدخول");
+      return false;
+    }
+    setDateError("");
+    return true;
+  };
+
+  const handleStartBooking = () => {
+    if (!user) {
+      toast({ title: "تسجيل الدخول مطلوب", description: "الرجاء تسجيل الدخول قبل الحجز" });
+      navigate("/auth");
+      return;
+    }
+    setBookingStep(1);
+  };
+
+  const resetBookingState = () => {
+    setBookingStep(null);
+    setBookingComplete(false);
+    setPaymentStatus("idle");
+    setForceFail(false);
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!user || !property) return;
+    setPaymentStatus("processing");
+
+    await new Promise((r) => setTimeout(r, 1500));
+
+    if (forceFail) {
+      setPaymentStatus("failed");
+      toast({ title: "فشل الدفع", description: "حاول مرة أخرى أو استخدم وسيلة دفع أخرى", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase.from("bookings").insert({
+      user_id: user.id,
+      property_id: property.id,
+      check_in: checkIn,
+      check_out: checkOut,
+      guests,
+      total_price: totalPrice + serviceFee,
+      service_fee: serviceFee,
+      status: "pending",
+      payment_method: paymentMethod,
+      guest_name: `${guestFirstName} ${guestLastName}`.trim(),
+      guest_email: guestEmail,
+      guest_phone: guestPhone,
+      notes: guestNotes || null,
+    });
+
+    if (error) {
+      console.error("Booking error:", error);
+      setPaymentStatus("failed");
+      toast({ title: "خطأ في الحجز", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    setPaymentStatus("success");
+    setBookingComplete(true);
+    toast({ title: "تم الحجز بنجاح!", description: "سيتم التواصل معك قريباً" });
+  };
 
   const renderBookingModal = () => {
     if (!bookingStep) return null;
