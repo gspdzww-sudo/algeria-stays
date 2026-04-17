@@ -9,6 +9,7 @@ import SearchResults from "./pages/SearchResults.tsx";
 import PropertyDetails from "./pages/PropertyDetails.tsx";
 import Auth from "./pages/Auth.tsx";
 import PartnersDashboard from "./pages/PartnersDashboard.tsx";
+import MyBookings from "./pages/MyBookings.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/property/:id" element={<PropertyDetails />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/partners/dashboard" element={<ProtectedRoute requiredRole="partner"><PartnersDashboard /></ProtectedRoute>} />
+            <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

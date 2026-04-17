@@ -25,6 +25,7 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-8 font-arabic text-sm">
             <Link to="/" className="text-foreground hover:text-primary transition-colors">الرئيسية</Link>
             <Link to="/search" className="text-muted-foreground hover:text-primary transition-colors">الوجهات</Link>
+            {user && <Link to="/my-bookings" className="text-muted-foreground hover:text-primary transition-colors">حجوزاتي</Link>}
             <Link to="/partners/dashboard" className="text-muted-foreground hover:text-primary transition-colors">الشركاء</Link>
           </div>
 
@@ -57,6 +58,7 @@ export function Navbar() {
           <div className="px-4 py-4 space-y-3 font-arabic text-sm">
             <Link to="/" className="block py-2 text-foreground" onClick={() => setMobileOpen(false)}>الرئيسية</Link>
             <Link to="/search" className="block py-2 text-muted-foreground" onClick={() => setMobileOpen(false)}>الوجهات</Link>
+            {user && <Link to="/my-bookings" className="block py-2 text-muted-foreground" onClick={() => setMobileOpen(false)}>حجوزاتي</Link>}
             <Link to="/partners/dashboard" className="block py-2 text-muted-foreground" onClick={() => setMobileOpen(false)}>الشركاء</Link>
             {user ? (
               <button onClick={() => { handleSignOut(); setMobileOpen(false); }}
