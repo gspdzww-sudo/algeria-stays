@@ -86,10 +86,32 @@ export function usePartnerBookings() {
       return;
     }
     setLoading(true);
+
+    // 1) جلب أيدي العقارات المملوكة للشريك
+    const { data: props, error: propsErr } = await supabase
+      .from("properties")
+      .select("id")
+      .eq("owner_id", user.id);
+
+    if (propsErr) {
+      console.error("Error loading owner properties:", propsErr);
+      setBookings([]);
+      setLoading(false);
+      return;
+    }
+
+    const propIds = (props ?? []).map((p) => p.id);
+    if (propIds.length === 0) {
+      setBookings([]);
+      setLoading(false);
+      return;
+    }
+
+    // 2) جلب الحجوزات المرتبطة بهذه العقارات (RLS تسمح للمالك بقراءتها)
     const { data, error } = await supabase
       .from("bookings")
-      .select("*, property:properties!inner(name, wilaya, owner_id)")
-      .eq("property.owner_id", user.id)
+      .select("*, property:properties(name, wilaya)")
+      .in("property_id", propIds)
       .order("created_at", { ascending: false });
 
     if (error) {

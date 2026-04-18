@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import type { PartnerProperty } from "@/hooks/usePartnerData";
+import { ALGERIA_WILAYAS } from "@/data/wilayas";
 
 interface Props {
   open: boolean;
@@ -137,7 +138,12 @@ export function PropertyFormModal({ open, property, onClose, onSaved }: Props) {
             </div>
             <div>
               <label className="text-xs font-arabic text-muted-foreground mb-1 block">الولاية *</label>
-              <input value={wilaya} onChange={(e) => setWilaya(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm outline-none focus:ring-2 focus:ring-ring" />
+              <select value={wilaya} onChange={(e) => setWilaya(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 font-arabic text-sm outline-none focus:ring-2 focus:ring-ring">
+                <option value="">اختر الولاية</option>
+                {ALGERIA_WILAYAS.map((w) => (
+                  <option key={w.code} value={w.name}>{w.code.toString().padStart(2, "0")} - {w.name}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="text-xs font-arabic text-muted-foreground mb-1 block">العنوان *</label>

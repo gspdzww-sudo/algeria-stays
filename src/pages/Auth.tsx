@@ -4,6 +4,7 @@ import { Eye, EyeOff, User, Building2 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { ALGERIA_WILAYAS } from "@/data/wilayas";
 
 type AuthMode = "login" | "signup";
 type UserRole = "user" | "partner";
@@ -125,8 +126,13 @@ const Auth = () => {
                 </div>
                 <div>
                   <label className="text-xs font-arabic text-muted-foreground mb-1 block">الولاية</label>
-                  <input type="text" required value={formData.wilaya} onChange={(e) => setFormData({ ...formData, wilaya: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring" placeholder="الجزائر العاصمة" />
+                  <select required value={formData.wilaya} onChange={(e) => setFormData({ ...formData, wilaya: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/50 font-arabic text-sm text-foreground outline-none focus:ring-2 focus:ring-ring">
+                    <option value="">اختر الولاية</option>
+                    {ALGERIA_WILAYAS.map((w) => (
+                      <option key={w.code} value={w.name}>{w.code.toString().padStart(2, "0")} - {w.name}</option>
+                    ))}
+                  </select>
                 </div>
               </>
             )}
