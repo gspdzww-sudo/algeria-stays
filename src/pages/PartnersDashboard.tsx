@@ -146,7 +146,7 @@ const PartnersDashboard = () => {
 
       {/* Main */}
       <main className="flex-1 min-w-0">
-        <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+        <header className="bg-card border-b border-border px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <button className="md:hidden" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-6 w-6 text-foreground" />
@@ -161,7 +161,7 @@ const PartnersDashboard = () => {
           </Link>
         </header>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* Overview */}
           {activeTab === "overview" && (
             <div className="space-y-6">
