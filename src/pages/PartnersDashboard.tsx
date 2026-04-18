@@ -32,6 +32,24 @@ const PartnersDashboard = () => {
 
   const { properties, loading: propsLoading, refetch: refetchProps } = usePartnerProperties();
   const { bookings, loading: bookingsLoading, refetch: refetchBookings } = usePartnerBookings();
+  const knownBookingIds = useRef<Set<string> | null>(null);
+
+  // Realtime notification on new bookings
+  useEffect(() => {
+    if (bookingsLoading) return;
+    if (knownBookingIds.current === null) {
+      knownBookingIds.current = new Set(bookings.map((b) => b.id));
+      return;
+    }
+    const fresh = bookings.filter((b) => !knownBookingIds.current!.has(b.id));
+    if (fresh.length > 0) {
+      fresh.forEach((b) => knownBookingIds.current!.add(b.id));
+      toast({
+        title: "🔔 حجز جديد!",
+        description: `${fresh[0].guest_name ?? "ضيف"} - ${fresh[0].property?.name ?? "إقامة"}${fresh.length > 1 ? ` (+${fresh.length - 1})` : ""}`,
+      });
+    }
+  }, [bookings, bookingsLoading, toast]);
 
   const handleSignOut = async () => {
     await signOut();
