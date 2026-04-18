@@ -578,6 +578,12 @@ const PropertyDetails = () => {
                 ))}
               </div>
             </div>
+
+            <ReviewsSection
+              propertyId={property.id}
+              rating={property.rating}
+              reviewsCount={property.reviews}
+            />
           </div>
 
           {/* Booking Card */}
