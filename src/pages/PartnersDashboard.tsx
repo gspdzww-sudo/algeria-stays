@@ -17,6 +17,8 @@ const statusConfig: Record<string, { label: string; icon: typeof CheckCircle; cl
   confirmed: { label: "مؤكد", icon: CheckCircle, className: "text-green-600 bg-green-50" },
   pending: { label: "قيد الانتظار", icon: Clock, className: "text-yellow-600 bg-yellow-50" },
   cancelled: { label: "ملغى", icon: XCircle, className: "text-red-600 bg-red-50" },
+  rejected: { label: "مرفوض", icon: XCircle, className: "text-red-600 bg-red-50" },
+  completed: { label: "مكتمل", icon: CheckCircle, className: "text-blue-600 bg-blue-50" },
 };
 
 const PartnersDashboard = () => {
@@ -256,7 +258,13 @@ const PartnersDashboard = () => {
                               {booking.status === "pending" && (
                                 <div className="flex gap-1">
                                   <button onClick={() => handleUpdateBookingStatus(booking.id, "confirmed")} className="text-xs font-arabic px-2 py-1 rounded-lg bg-green-50 text-green-600 hover:bg-green-100">تأكيد</button>
-                                  <button onClick={() => handleUpdateBookingStatus(booking.id, "cancelled")} className="text-xs font-arabic px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100">رفض</button>
+                                  <button onClick={() => handleUpdateBookingStatus(booking.id, "rejected")} className="text-xs font-arabic px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100">رفض</button>
+                                </div>
+                              )}
+                              {booking.status === "confirmed" && (
+                                <div className="flex gap-1">
+                                  <button onClick={() => handleUpdateBookingStatus(booking.id, "completed")} className="text-xs font-arabic px-2 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100">إكمال</button>
+                                  <button onClick={() => handleUpdateBookingStatus(booking.id, "cancelled")} className="text-xs font-arabic px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100">إلغاء</button>
                                 </div>
                               )}
                             </td>
