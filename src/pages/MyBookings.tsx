@@ -1,17 +1,20 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Calendar, MapPin, Users, CheckCircle, Clock, XCircle, ArrowRight, Loader2 } from "lucide-react";
+import { Calendar, MapPin, Users, CheckCircle, Clock, XCircle, ArrowRight, Loader2, Star } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMyBookings } from "@/hooks/usePartnerData";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ReviewModal } from "@/components/ReviewModal";
 
 const statusConfig: Record<string, { label: string; icon: typeof CheckCircle; className: string }> = {
   confirmed: { label: "مؤكد", icon: CheckCircle, className: "text-green-600 bg-green-50" },
   pending: { label: "قيد الانتظار", icon: Clock, className: "text-yellow-600 bg-yellow-50" },
   cancelled: { label: "ملغى", icon: XCircle, className: "text-red-600 bg-red-50" },
+  rejected: { label: "مرفوض", icon: XCircle, className: "text-red-600 bg-red-50" },
+  completed: { label: "مكتمل", icon: CheckCircle, className: "text-blue-600 bg-blue-50" },
 };
 
 const MyBookings = () => {
@@ -20,6 +23,8 @@ const MyBookings = () => {
   const { toast } = useToast();
   const { bookings, loading, refetch } = useMyBookings();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [reviewBooking, setReviewBooking] = useState<{ id: string; propertyId: string; name: string } | null>(null);
+  const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
 
   if (!authLoading && !user) {
     navigate("/auth");
@@ -42,10 +47,10 @@ const MyBookings = () => {
   return (
     <div className="min-h-screen bg-background" dir="rtl">
       <Navbar />
-      <div className="pt-24 pb-12 px-4 max-w-5xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-heading font-bold text-foreground mb-2">حجوزاتي</h1>
-          <p className="font-arabic text-muted-foreground">جميع حجوزاتك في مكان واحد</p>
+      <div className="pt-20 sm:pt-24 pb-12 px-4 max-w-5xl mx-auto">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-heading font-bold text-foreground mb-2">حجوزاتي</h1>
+          <p className="font-arabic text-sm sm:text-base text-muted-foreground">جميع حجوزاتك في مكان واحد</p>
         </div>
 
         {loading ? (
@@ -54,7 +59,7 @@ const MyBookings = () => {
             <p className="font-arabic text-muted-foreground">جاري التحميل...</p>
           </div>
         ) : bookings.length === 0 ? (
-          <div className="text-center py-20 bg-card rounded-2xl border border-border/30">
+          <div className="text-center py-16 sm:py-20 bg-card rounded-2xl border border-border/30 px-4">
             <div className="w-20 h-20 rounded-full bg-accent flex items-center justify-center mx-auto mb-4">
               <Calendar className="h-10 w-10 text-accent-foreground" />
             </div>
@@ -70,9 +75,10 @@ const MyBookings = () => {
             {bookings.map((booking) => {
               const status = statusConfig[booking.status] ?? statusConfig.pending;
               const canCancel = booking.status === "pending" || booking.status === "confirmed";
+              const canReview = booking.status === "completed" && !reviewedIds.has(booking.id);
               return (
-                <div key={booking.id} className="bg-card rounded-2xl shadow-soft border border-border/30 p-5">
-                  <div className="flex items-start justify-between gap-4 mb-4">
+                <div key={booking.id} className="bg-card rounded-2xl shadow-soft border border-border/30 p-4 sm:p-5">
+                  <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 className="font-heading font-semibold text-foreground truncate">
@@ -114,16 +120,31 @@ const MyBookings = () => {
                     </div>
                   </div>
 
-                  {canCancel && (
-                    <div className="flex justify-end pt-3 border-t border-border">
-                      <button
-                        onClick={() => handleCancel(booking.id)}
-                        disabled={cancellingId === booking.id}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl border border-destructive/30 text-destructive font-arabic text-sm hover:bg-destructive/10 transition-all disabled:opacity-50"
-                      >
-                        {cancellingId === booking.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
-                        إلغاء الحجز
-                      </button>
+                  {(canCancel || canReview) && (
+                    <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-border">
+                      {canReview && (
+                        <button
+                          onClick={() => setReviewBooking({
+                            id: booking.id,
+                            propertyId: booking.property_id,
+                            name: booking.property?.name ?? "إقامة",
+                          })}
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-gold text-primary-foreground font-arabic text-sm shadow-gold hover:opacity-90"
+                        >
+                          <Star className="h-4 w-4" />
+                          أضف تقييماً
+                        </button>
+                      )}
+                      {canCancel && (
+                        <button
+                          onClick={() => handleCancel(booking.id)}
+                          disabled={cancellingId === booking.id}
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-destructive/30 text-destructive font-arabic text-sm hover:bg-destructive/10 transition-all disabled:opacity-50"
+                        >
+                          {cancellingId === booking.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+                          إلغاء الحجز
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -132,6 +153,20 @@ const MyBookings = () => {
           </div>
         )}
       </div>
+
+      {reviewBooking && (
+        <ReviewModal
+          open={!!reviewBooking}
+          bookingId={reviewBooking.id}
+          propertyId={reviewBooking.propertyId}
+          propertyName={reviewBooking.name}
+          onClose={() => setReviewBooking(null)}
+          onSaved={() => {
+            setReviewedIds((s) => new Set(s).add(reviewBooking.id));
+          }}
+        />
+      )}
+
       <Footer />
     </div>
   );

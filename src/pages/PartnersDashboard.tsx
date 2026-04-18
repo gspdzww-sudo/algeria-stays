@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -32,6 +32,24 @@ const PartnersDashboard = () => {
 
   const { properties, loading: propsLoading, refetch: refetchProps } = usePartnerProperties();
   const { bookings, loading: bookingsLoading, refetch: refetchBookings } = usePartnerBookings();
+  const knownBookingIds = useRef<Set<string> | null>(null);
+
+  // Realtime notification on new bookings
+  useEffect(() => {
+    if (bookingsLoading) return;
+    if (knownBookingIds.current === null) {
+      knownBookingIds.current = new Set(bookings.map((b) => b.id));
+      return;
+    }
+    const fresh = bookings.filter((b) => !knownBookingIds.current!.has(b.id));
+    if (fresh.length > 0) {
+      fresh.forEach((b) => knownBookingIds.current!.add(b.id));
+      toast({
+        title: "🔔 حجز جديد!",
+        description: `${fresh[0].guest_name ?? "ضيف"} - ${fresh[0].property?.name ?? "إقامة"}${fresh.length > 1 ? ` (+${fresh.length - 1})` : ""}`,
+      });
+    }
+  }, [bookings, bookingsLoading, toast]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -128,7 +146,7 @@ const PartnersDashboard = () => {
 
       {/* Main */}
       <main className="flex-1 min-w-0">
-        <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+        <header className="bg-card border-b border-border px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <button className="md:hidden" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-6 w-6 text-foreground" />
@@ -143,7 +161,7 @@ const PartnersDashboard = () => {
           </Link>
         </header>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* Overview */}
           {activeTab === "overview" && (
             <div className="space-y-6">
