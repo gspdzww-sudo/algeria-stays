@@ -127,6 +127,20 @@ export function usePartnerBookings() {
     refetch();
   }, [refetch]);
 
+  // Realtime: refetch when bookings change (new bookings, status updates)
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`partner-bookings-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings" },
+        () => { refetch(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, refetch]);
+
   return { bookings, loading, refetch };
 }
 
