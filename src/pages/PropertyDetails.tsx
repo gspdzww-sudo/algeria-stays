@@ -10,6 +10,8 @@ import { useProperty } from "@/hooks/useProperties";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { fetchBookedRanges, rangesOverlap } from "@/hooks/useReviews";
+import { ReviewsSection } from "@/components/ReviewsSection";
 
 type BookingStep = 1 | 2 | 3;
 type PaymentStatus = "idle" | "processing" | "success" | "failed";
@@ -83,7 +85,7 @@ const PropertyDetails = () => {
   const nextImage = () => setCurrentImage((prev) => (prev + 1) % property.images.length);
   const prevImage = () => setCurrentImage((prev) => (prev - 1 + property.images.length) % property.images.length);
 
-  const validateDates = () => {
+  const validateDates = async () => {
     if (!checkIn || !checkOut) {
       setDateError("يرجى اختيار تاريخ الدخول والخروج");
       return false;
@@ -98,6 +100,15 @@ const PropertyDetails = () => {
     if (co <= ci) {
       setDateError("تاريخ الخروج يجب أن يكون بعد تاريخ الدخول");
       return false;
+    }
+    // Conflict check
+    if (property) {
+      const ranges = await fetchBookedRanges(property.id);
+      const conflict = ranges.some((r) => rangesOverlap(checkIn, checkOut, r.check_in, r.check_out));
+      if (conflict) {
+        setDateError("هذه التواريخ محجوزة مسبقاً. يرجى اختيار تواريخ أخرى.");
+        return false;
+      }
     }
     setDateError("");
     return true;
@@ -287,7 +298,7 @@ const PropertyDetails = () => {
                 </div>
 
                 <button
-                  onClick={() => { if (validateDates()) setBookingStep(2); }}
+                  onClick={async () => { if (await validateDates()) setBookingStep(2); }}
                   className="w-full bg-gradient-gold text-primary-foreground font-arabic font-semibold py-3 rounded-xl shadow-gold hover:opacity-90 transition-all flex items-center justify-center gap-2"
                 >
                   <span>التالي: معلوماتك الشخصية</span>
