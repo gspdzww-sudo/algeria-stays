@@ -398,6 +398,16 @@ const PartnersDashboard = () => {
         onClose={() => setFormOpen(false)}
         onSaved={refetchProps}
       />
+
+      {chatBooking && (
+        <ChatModal
+          open={!!chatBooking}
+          bookingId={chatBooking.id}
+          title={chatBooking.guest}
+          subtitle={chatBooking.name}
+          onClose={() => setChatBooking(null)}
+        />
+      )}
     </div>
   );
 };
