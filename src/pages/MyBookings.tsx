@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Calendar, MapPin, Users, CheckCircle, Clock, XCircle, ArrowRight, Loader2, Star } from "lucide-react";
+import { Calendar, MapPin, Users, CheckCircle, Clock, XCircle, ArrowRight, Loader2, Star, MessageCircle } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,7 @@ import { useMyBookings } from "@/hooks/usePartnerData";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ReviewModal } from "@/components/ReviewModal";
+import { ChatModal } from "@/components/ChatModal";
 
 const statusConfig: Record<string, { label: string; icon: typeof CheckCircle; className: string }> = {
   confirmed: { label: "مؤكد", icon: CheckCircle, className: "text-green-600 bg-green-50" },
@@ -25,6 +26,7 @@ const MyBookings = () => {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [reviewBooking, setReviewBooking] = useState<{ id: string; propertyId: string; name: string } | null>(null);
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
+  const [chatBooking, setChatBooking] = useState<{ id: string; name: string; wilaya: string } | null>(null);
 
   if (!authLoading && !user) {
     navigate("/auth");
@@ -76,6 +78,7 @@ const MyBookings = () => {
               const status = statusConfig[booking.status] ?? statusConfig.pending;
               const canCancel = booking.status === "pending" || booking.status === "confirmed";
               const canReview = booking.status === "completed" && !reviewedIds.has(booking.id);
+              const canChat = booking.status !== "rejected" && booking.status !== "cancelled";
               return (
                 <div key={booking.id} className="bg-card rounded-2xl shadow-soft border border-border/30 p-4 sm:p-5">
                   <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
@@ -120,8 +123,21 @@ const MyBookings = () => {
                     </div>
                   </div>
 
-                  {(canCancel || canReview) && (
+                  {(canCancel || canReview || canChat) && (
                     <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-border">
+                      {canChat && (
+                        <button
+                          onClick={() => setChatBooking({
+                            id: booking.id,
+                            name: booking.property?.name ?? "إقامة",
+                            wilaya: booking.property?.wilaya ?? "",
+                          })}
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary/30 text-primary font-arabic text-sm hover:bg-primary/10 transition-all"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          مراسلة المضيف
+                        </button>
+                      )}
                       {canReview && (
                         <button
                           onClick={() => setReviewBooking({
@@ -164,6 +180,16 @@ const MyBookings = () => {
           onSaved={() => {
             setReviewedIds((s) => new Set(s).add(reviewBooking.id));
           }}
+        />
+      )}
+
+      {chatBooking && (
+        <ChatModal
+          open={!!chatBooking}
+          bookingId={chatBooking.id}
+          title={chatBooking.name}
+          subtitle={chatBooking.wilaya}
+          onClose={() => setChatBooking(null)}
         />
       )}
 
