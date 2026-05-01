@@ -275,18 +275,30 @@ const PartnersDashboard = () => {
                               </span>
                             </td>
                             <td className="px-5 py-3">
-                              {booking.status === "pending" && (
-                                <div className="flex gap-1">
-                                  <button onClick={() => handleUpdateBookingStatus(booking.id, "confirmed")} className="text-xs font-arabic px-2 py-1 rounded-lg bg-green-50 text-green-600 hover:bg-green-100">تأكيد</button>
-                                  <button onClick={() => handleUpdateBookingStatus(booking.id, "rejected")} className="text-xs font-arabic px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100">رفض</button>
-                                </div>
-                              )}
-                              {booking.status === "confirmed" && (
-                                <div className="flex gap-1">
-                                  <button onClick={() => handleUpdateBookingStatus(booking.id, "completed")} className="text-xs font-arabic px-2 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100">إكمال</button>
-                                  <button onClick={() => handleUpdateBookingStatus(booking.id, "cancelled")} className="text-xs font-arabic px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100">إلغاء</button>
-                                </div>
-                              )}
+                              <div className="flex gap-1 flex-wrap items-center">
+                                {booking.status === "pending" && (
+                                  <>
+                                    <button onClick={() => handleUpdateBookingStatus(booking.id, "confirmed")} className="text-xs font-arabic px-2 py-1 rounded-lg bg-green-50 text-green-600 hover:bg-green-100">تأكيد</button>
+                                    <button onClick={() => handleUpdateBookingStatus(booking.id, "rejected")} className="text-xs font-arabic px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100">رفض</button>
+                                  </>
+                                )}
+                                {booking.status === "confirmed" && (
+                                  <>
+                                    <button onClick={() => handleUpdateBookingStatus(booking.id, "completed")} className="text-xs font-arabic px-2 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100">إكمال</button>
+                                    <button onClick={() => handleUpdateBookingStatus(booking.id, "cancelled")} className="text-xs font-arabic px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100">إلغاء</button>
+                                  </>
+                                )}
+                                {booking.status !== "rejected" && booking.status !== "cancelled" && (
+                                  <button
+                                    onClick={() => setChatBooking({ id: booking.id, name: booking.property?.name ?? "إقامة", guest: booking.guest_name ?? "ضيف" })}
+                                    className="text-xs font-arabic px-2 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 inline-flex items-center gap-1"
+                                    title="مراسلة المسافر"
+                                  >
+                                    <MessageCircle className="h-3 w-3" />
+                                    رسالة
+                                  </button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         );
