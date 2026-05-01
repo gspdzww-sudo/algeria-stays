@@ -4,10 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   BarChart3, BedDouble, Calendar, DollarSign, Star, TrendingUp,
   Plus, Edit, Trash2, Menu, X, Home, Settings, LogOut, Users,
-  CheckCircle, Clock, XCircle, Loader2, Image as ImageIcon
+  CheckCircle, Clock, XCircle, Loader2, Image as ImageIcon, MessageCircle
 } from "lucide-react";
 import { usePartnerBookings, usePartnerProperties, type PartnerProperty } from "@/hooks/usePartnerData";
 import { PropertyFormModal } from "@/components/PropertyFormModal";
+import { ChatModal } from "@/components/ChatModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -26,6 +27,7 @@ const PartnersDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<PartnerProperty | null>(null);
+  const [chatBooking, setChatBooking] = useState<{ id: string; name: string; guest: string } | null>(null);
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
