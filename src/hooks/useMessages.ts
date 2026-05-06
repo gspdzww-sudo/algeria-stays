@@ -6,7 +6,8 @@ export interface ChatMessage {
   id: string;
   booking_id: string;
   sender_id: string;
-  content: string;
+  content: string | null;
+  image_url: string | null;
   read_at: string | null;
   created_at: string;
 }
@@ -58,13 +59,16 @@ export function useMessages(bookingId: string | null) {
   }, [bookingId, fetchMessages]);
 
   const send = useCallback(
-    async (content: string) => {
-      if (!bookingId || !user?.id || !content.trim()) return { error: "empty" as const };
+    async (content: string, imageUrl?: string | null) => {
+      if (!bookingId || !user?.id) return { error: "empty" as const };
+      const trimmed = content.trim();
+      if (!trimmed && !imageUrl) return { error: "empty" as const };
       setSending(true);
       const { error } = await supabase.from("messages").insert({
         booking_id: bookingId,
         sender_id: user.id,
-        content: content.trim(),
+        content: trimmed || null,
+        image_url: imageUrl ?? null,
       });
       setSending(false);
       return { error: error?.message ?? null };
