@@ -3,17 +3,20 @@ import { HeroSearch } from "./HeroSearch";
 
 export function Hero() {
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-      {/* Background Image */}
+    <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
+      {/* Background Image with slow Ken-Burns */}
       <div className="absolute inset-0">
         <img
           src={heroImage}
           alt="فندق فاخر في الجزائر"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover animate-slow-zoom"
           width={1920}
           height={1080}
         />
         <div className="absolute inset-0 bg-gradient-hero" />
+        {/* Decorative orbs */}
+        <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full bg-primary/20 blur-3xl animate-float-slow" />
+        <div className="absolute -bottom-24 -left-20 w-[28rem] h-[28rem] rounded-full bg-secondary/30 blur-3xl animate-float-slow" style={{ animationDelay: "2s" }} />
       </div>
 
       {/* Content */}
@@ -32,7 +35,7 @@ export function Hero() {
         </div>
 
         {/* Stats */}
-        <div className="mt-12 flex flex-wrap justify-center gap-8 md:gap-16 animate-fade-up" style={{ animationDelay: "0.4s" }}>
+        <div className="mt-12 flex flex-wrap justify-center gap-8 md:gap-16 animate-fade-up opacity-0" style={{ animationDelay: "0.4s" }}>
           {[
             { number: "58", label: "ولاية مغطاة" },
             { number: "+2000", label: "فندق وشقة" },
