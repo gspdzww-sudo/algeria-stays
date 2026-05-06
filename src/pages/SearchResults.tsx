@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
-import { useSearchParams, Link } from "react-router-dom";
-import { Star, MapPin, SlidersHorizontal, X, ArrowUpDown } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Star, SlidersHorizontal, X, ArrowUpDown } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { HeroSearch } from "@/components/HeroSearch";
+import { PropertyCard } from "@/components/PropertyCard";
 import { useProperties } from "@/hooks/useProperties";
 import { accommodationTypes } from "@/data/properties";
 
@@ -195,35 +196,20 @@ const SearchResults = () => {
                 <p className="text-sm font-arabic text-muted-foreground mt-2">جرّب تغيير الفلاتر أو البحث في ولاية أخرى</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
                 {filteredProperties.map((property) => (
-                  <Link
+                  <PropertyCard
                     key={property.id}
-                    to={`/property/${property.id}`}
-                    className="bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-elevated transition-all duration-300 group border border-border/30"
-                  >
-                    <div className="relative h-48 overflow-hidden">
-                      <img src={property.image} alt={property.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      <span className="absolute top-3 right-3 px-3 py-1 rounded-full bg-card/90 backdrop-blur-sm text-xs font-arabic text-foreground">{property.type}</span>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-heading font-semibold text-foreground mb-1">{property.name}</h3>
-                      <p className="text-sm font-arabic text-muted-foreground mb-3 flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />{property.location}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="text-lg font-heading font-bold text-primary">{property.price.toLocaleString()}</span>
-                          <span className="text-xs font-arabic text-muted-foreground mr-1">دج / ليلة</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 fill-gold text-gold" />
-                          <span className="text-sm font-arabic font-semibold text-foreground">{property.rating}</span>
-                          <span className="text-xs font-arabic text-muted-foreground">({property.reviews})</span>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
+                    id={property.id}
+                    name={property.name}
+                    location={property.location}
+                    price={property.price}
+                    rating={property.rating}
+                    reviews={property.reviews}
+                    type={property.type}
+                    image={property.image}
+                    images={property.images}
+                  />
                 ))}
               </div>
             )}

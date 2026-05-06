@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  Star, MapPin, Users, BedDouble, ChevronRight, ChevronLeft,
+  Star, MapPin, Users, BedDouble,
   Check, CreditCard, Shield, ArrowRight, AlertCircle, XCircle
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { PropertyGallery } from "@/components/PropertyGallery";
 import { useProperty } from "@/hooks/useProperties";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +32,6 @@ const PropertyDetails = () => {
   const { toast } = useToast();
   const { property, loading } = useProperty(id);
 
-  const [currentImage, setCurrentImage] = useState(0);
   const [bookingStep, setBookingStep] = useState<BookingStep | null>(null);
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
@@ -81,9 +81,6 @@ const PropertyDetails = () => {
       : 1;
   const totalPrice = property.price * nights;
   const serviceFee = Math.round(totalPrice * 0.05);
-
-  const nextImage = () => setCurrentImage((prev) => (prev + 1) % property.images.length);
-  const prevImage = () => setCurrentImage((prev) => (prev - 1 + property.images.length) % property.images.length);
 
   const validateDates = async () => {
     if (!checkIn || !checkOut) {
@@ -493,41 +490,8 @@ const PropertyDetails = () => {
       <Navbar />
       <div className="pt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Image Gallery */}
-        <div className="relative rounded-2xl overflow-hidden mb-8 h-[300px] md:h-[500px]">
-          <img
-            src={property.images[currentImage]}
-            alt={property.name}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 flex items-center justify-between px-4">
-            <button
-              onClick={prevImage}
-              className="w-10 h-10 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center hover:bg-card transition-all"
-            >
-              <ChevronRight className="h-5 w-5 text-foreground" />
-            </button>
-            <button
-              onClick={nextImage}
-              className="w-10 h-10 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center hover:bg-card transition-all"
-            >
-              <ChevronLeft className="h-5 w-5 text-foreground" />
-            </button>
-          </div>
-          {/* Thumbnails */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-            {property.images.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentImage(i)}
-                className={`w-3 h-3 rounded-full transition-all ${
-                  i === currentImage ? "bg-primary-foreground scale-125" : "bg-primary-foreground/50"
-                }`}
-              />
-            ))}
-          </div>
-          <span className="absolute top-4 right-4 px-3 py-1 rounded-full bg-card/90 backdrop-blur-sm text-sm font-arabic text-foreground">
-            {property.type}
-          </span>
+        <div className="mb-8 animate-fade-in">
+          <PropertyGallery images={property.images} alt={property.name} badge={property.type} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
