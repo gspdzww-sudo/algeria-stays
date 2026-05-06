@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Send, Loader2, MessageCircle } from "lucide-react";
+import { X, Send, Loader2, MessageCircle, ImagePlus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMessages } from "@/hooks/useMessages";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ChatModalProps {
   open: boolean;
@@ -15,7 +17,9 @@ export function ChatModal({ open, bookingId, title, subtitle, onClose }: ChatMod
   const { user } = useAuth();
   const { messages, loading, sending, send } = useMessages(open ? bookingId : null);
   const [text, setText] = useState("");
+  const [uploading, setUploading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -30,6 +34,38 @@ export function ChatModal({ open, bookingId, title, subtitle, onClose }: ChatMod
     if (!text.trim() || sending) return;
     const res = await send(text);
     if (!res.error) setText("");
+  };
+
+  const handlePickImage = () => fileInputRef.current?.click();
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !user?.id) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("الملف يجب أن يكون صورة");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("حجم الصورة يجب ألا يتجاوز 5 ميغابايت");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${bookingId}/${user.id}-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("chat-images").upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+    });
+    if (upErr) {
+      setUploading(false);
+      toast.error("فشل رفع الصورة");
+      return;
+    }
+    const { data: signed } = await supabase.storage.from("chat-images").createSignedUrl(path, 60 * 60 * 24 * 365);
+    const url = signed?.signedUrl ?? path;
+    await send("", url);
+    setUploading(false);
   };
 
   return (
@@ -75,7 +111,17 @@ export function ChatModal({ open, bookingId, title, subtitle, onClose }: ChatMod
                         : "bg-card border border-border text-foreground rounded-br-sm"
                     }`}
                   >
-                    <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                    {m.image_url && (
+                      <a href={m.image_url} target="_blank" rel="noopener noreferrer" className="block mb-1">
+                        <img
+                          src={m.image_url}
+                          alt="مرفق"
+                          loading="lazy"
+                          className="rounded-lg max-h-64 w-auto object-cover"
+                        />
+                      </a>
+                    )}
+                    {m.content && <p className="whitespace-pre-wrap break-words">{m.content}</p>}
                     <p className={`text-[10px] mt-1 ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`} dir="ltr">
                       {new Date(m.created_at).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })}
                     </p>
@@ -88,6 +134,22 @@ export function ChatModal({ open, bookingId, title, subtitle, onClose }: ChatMod
 
         {/* Input */}
         <form onSubmit={handleSend} className="p-3 border-t border-border flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageChange}
+          />
+          <button
+            type="button"
+            onClick={handlePickImage}
+            disabled={uploading || sending}
+            className="p-2.5 rounded-xl border border-border bg-background text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors disabled:opacity-50"
+            aria-label="إرفاق صورة"
+          >
+            {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
+          </button>
           <input
             type="text"
             value={text}
