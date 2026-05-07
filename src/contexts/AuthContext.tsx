@@ -35,14 +35,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, metadata?: Record<string, string>) => {
-    const { error } = await supabase.auth.signUp({
+    const PROD_URL = "https://raidsaker.online";
+    const isLocalHost = /localhost|127\.0\.0\.1|lovable\.app/i.test(window.location.hostname);
+    const redirectTo = isLocalHost ? window.location.origin : PROD_URL;
+
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: metadata,
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: redirectTo,
       },
     });
+
+    // Supabase returns success for already-registered emails (security behaviour)
+    // but `identities` will be empty. Surface that to the user.
+    if (!error && data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      return { error: new Error("هذا البريد الإلكتروني مسجّل مسبقاً. حاول تسجيل الدخول أو إعادة تعيين كلمة المرور.") };
+    }
+
     return { error: error as Error | null };
   };
 
