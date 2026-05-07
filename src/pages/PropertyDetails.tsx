@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import {
   Star, MapPin, Users, BedDouble,
-  Check, CreditCard, Shield, ArrowRight, AlertCircle, XCircle
+  Check, CreditCard, Shield, ArrowRight, AlertCircle, XCircle, ChevronLeft, Home
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -28,9 +28,21 @@ const todayStr = () => new Date().toISOString().split("T")[0];
 const PropertyDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
   const { property, loading } = useProperty(id);
+
+  const handleBack = () => {
+    const from = (location.state as { from?: string } | null)?.from;
+    if (from) {
+      navigate(from);
+    } else if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/search");
+    }
+  };
 
   const [bookingStep, setBookingStep] = useState<BookingStep | null>(null);
   const [checkIn, setCheckIn] = useState("");
@@ -489,6 +501,34 @@ const PropertyDetails = () => {
     <div className="min-h-screen bg-background" dir="rtl">
       <Navbar />
       <div className="pt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Back navigation + Breadcrumb */}
+        <div className="mb-5 flex items-center justify-between gap-3 animate-fade-in">
+          <button
+            onClick={handleBack}
+            className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border/60 shadow-soft hover:shadow-elevated hover:border-primary/40 hover:bg-card transition-all font-arabic text-sm text-foreground"
+            aria-label="العودة"
+          >
+            <ArrowRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-1" />
+            <span>العودة للنتائج</span>
+          </button>
+
+          <nav className="hidden md:flex items-center gap-1.5 font-arabic text-xs text-muted-foreground" aria-label="breadcrumb">
+            <Link to="/" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
+              <Home className="h-3.5 w-3.5" />
+              <span>الرئيسية</span>
+            </Link>
+            <ChevronLeft className="h-3.5 w-3.5 opacity-60" />
+            <Link
+              to={`/search?wilaya=${encodeURIComponent(property.wilaya || "")}`}
+              className="hover:text-primary transition-colors"
+            >
+              {property.wilaya || "الإقامات"}
+            </Link>
+            <ChevronLeft className="h-3.5 w-3.5 opacity-60" />
+            <span className="text-foreground font-semibold line-clamp-1 max-w-[260px]">{property.name}</span>
+          </nav>
+        </div>
+
         {/* Image Gallery */}
         <div className="mb-8 animate-fade-in">
           <PropertyGallery images={property.images} alt={property.name} badge={property.type} />

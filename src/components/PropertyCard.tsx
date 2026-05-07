@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Star, MapPin, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PropertyCardProps {
@@ -18,6 +18,8 @@ export function PropertyCard(p: PropertyCardProps) {
   const gallery = (p.images && p.images.length > 0 ? p.images : [p.image]).filter(Boolean);
   const [idx, setIdx] = useState(0);
   const [liked, setLiked] = useState(false);
+  const location = useLocation();
+  const fromPath = location.pathname + location.search;
 
   const go = (e: React.MouseEvent, dir: 1 | -1) => {
     e.preventDefault();
@@ -34,6 +36,7 @@ export function PropertyCard(p: PropertyCardProps) {
   return (
     <Link
       to={`/property/${p.id}`}
+      state={{ from: fromPath }}
       className="group block animate-fade-in"
     >
       <div className="relative h-56 rounded-2xl overflow-hidden bg-muted shadow-soft group-hover:shadow-elevated transition-shadow duration-300">
