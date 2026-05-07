@@ -122,9 +122,10 @@ export function PropertyGallery({ images, alt, badge }: PropertyGalleryProps) {
         <div
           className="fixed inset-0 z-[100] bg-foreground/95 backdrop-blur-md animate-fade-in flex flex-col"
           dir="rtl"
+          onClick={() => setOpen(false)}
         >
           {/* Top bar */}
-          <div className="flex items-center justify-between p-4 text-primary-foreground">
+          <div className="flex items-center justify-between p-4 text-primary-foreground" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setOpen(false)}
               className="w-10 h-10 rounded-full bg-card/10 hover:bg-card/20 flex items-center justify-center transition-all"
@@ -146,6 +147,7 @@ export function PropertyGallery({ images, alt, badge }: PropertyGalleryProps) {
                   <img
                     src={src}
                     alt={`${alt} - ${i + 1}`}
+                    onClick={(e) => e.stopPropagation()}
                     className="max-h-full max-w-full object-contain rounded-xl shadow-elevated animate-fade-in"
                   />
                 </div>
@@ -154,14 +156,14 @@ export function PropertyGallery({ images, alt, badge }: PropertyGalleryProps) {
 
             {/* Nav buttons */}
             <button
-              onClick={prev}
+              onClick={(e) => { e.stopPropagation(); prev(); }}
               className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-card/15 hover:bg-card/30 backdrop-blur-sm flex items-center justify-center text-primary-foreground transition-all hover:scale-110"
               aria-label="السابق"
             >
               <ChevronRight className="h-6 w-6" />
             </button>
             <button
-              onClick={next}
+              onClick={(e) => { e.stopPropagation(); next(); }}
               className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-card/15 hover:bg-card/30 backdrop-blur-sm flex items-center justify-center text-primary-foreground transition-all hover:scale-110"
               aria-label="التالي"
             >
@@ -170,7 +172,7 @@ export function PropertyGallery({ images, alt, badge }: PropertyGalleryProps) {
           </div>
 
           {/* Thumbnails */}
-          <div className="px-4 pb-4 pt-2 overflow-x-auto">
+          <div className="px-4 pb-4 pt-2 overflow-x-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex gap-2 justify-center min-w-max mx-auto">
               {safeImages.map((src, i) => (
                 <button
